@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Неоновые звёзды — квадратные корни</title>
+<style>
+:root{--pink:#ff45d7;--violet:#9d5cff;--cyan:#4df3ff;--yellow:#ffe45e;--green:#55ff9a;--red:#ff6684}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#030207;color:#fff;font-family:Arial,sans-serif;overflow:hidden}
+body{background:radial-gradient(circle at 50% 18%,rgba(142,70,255,.22),transparent 26%),radial-gradient(circle at 20% 80%,rgba(255,69,215,.12),transparent 30%),linear-gradient(#05030b,#0a0414 62%,#020105)}
+.game{position:relative;width:100vw;height:100vh;overflow:hidden}
+#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:.14;filter:saturate(.6) contrast(1.15)}
+.dark-layer{position:absolute;inset:0;background:linear-gradient(rgba(2,1,6,.55),rgba(4,2,11,.78));pointer-events:none}
+.stage-lights:before,.stage-lights:after{content:"";position:absolute;top:-18%;width:42vw;height:110vh;background:linear-gradient(180deg,rgba(255,69,215,.28),transparent 70%);filter:blur(18px);opacity:.55;pointer-events:none}
+.stage-lights:before{left:-7vw;transform:rotate(14deg);animation:sweep1 8s ease-in-out infinite}
+.stage-lights:after{right:-7vw;transform:rotate(-14deg);animation:sweep2 10s ease-in-out infinite}
+@keyframes sweep1{50%{transform:rotate(25deg) translateX(6vw)}}@keyframes sweep2{50%{transform:rotate(-25deg) translateX(-6vw)}}
+.header{position:absolute;left:16px;right:16px;top:12px;z-index:5;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.brand,.score,.controls{background:rgba(10,6,18,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);border-radius:18px;padding:10px 14px}
+.brand{font-weight:1000;color:var(--yellow);white-space:nowrap}.score{text-align:center;font-weight:900}.controls{display:flex;gap:8px}
+.controls button,.startcard button,.finishcard button{border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;color:white;background:linear-gradient(135deg,#5b2d85,#34144f)}
+.controls button.active{background:linear-gradient(135deg,#1d7b67,#124438)}
+.prompt{position:absolute;z-index:5;top:88px;left:50%;transform:translateX(-50%);width:min(92vw,900px);text-align:center;padding:16px 20px;border-radius:22px;background:rgba(10,6,18,.82);border:1px solid rgba(255,228,94,.38);backdrop-filter:blur(8px);box-shadow:0 0 30px rgba(255,69,215,.12)}
+.prompt .small{opacity:.8;font-size:14px}.prompt .task{font-size:clamp(24px,3.4vw,44px);font-weight:1000;margin-top:6px}
+.arena{position:absolute;inset:155px 18px 70px;z-index:3}
+.star{position:absolute;width:clamp(104px,12vw,170px);aspect-ratio:1;display:grid;place-items:center;cursor:pointer;user-select:none;transition:transform .18s ease,filter .18s ease;filter:drop-shadow(0 0 12px currentColor) drop-shadow(0 0 28px currentColor);color:var(--pink)}
+.star:nth-child(2n){color:var(--cyan)}.star:nth-child(3n){color:var(--violet)}.star:nth-child(4n){color:var(--yellow)}
+.star:before{content:"";position:absolute;inset:0;background:currentColor;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 94%,50% 72%,21% 94%,32% 57%,2% 35%,39% 35%);opacity:.22}
+.star:after{content:"";position:absolute;inset:8%;border:5px solid currentColor;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 94%,50% 72%,21% 94%,32% 57%,2% 35%,39% 35%)}
+.star span{position:relative;z-index:2;background:rgba(4,2,10,.84);border:2px solid currentColor;border-radius:14px;padding:8px 12px;font-size:clamp(22px,2.8vw,36px);font-weight:1000;white-space:nowrap}
+.star:hover,.star.hovered{transform:scale(1.08);filter:drop-shadow(0 0 18px currentColor) drop-shadow(0 0 42px currentColor)}
+.star.correct{animation:burst .65s ease forwards}.star.wrong{animation:shake .38s ease}
+@keyframes burst{0%{transform:scale(1)}45%{transform:scale(1.35);opacity:1}100%{transform:scale(.15) rotate(35deg);opacity:0}}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-5px)}}
+#finger{position:absolute;z-index:20;width:34px;height:34px;border-radius:50%;border:3px solid white;background:rgba(255,69,215,.42);box-shadow:0 0 16px var(--pink),0 0 35px var(--violet);transform:translate(-50%,-50%);pointer-events:none;display:none}
+.footer{position:absolute;z-index:5;left:18px;right:18px;bottom:14px;display:flex;justify-content:center}
+.status{padding:10px 16px;border-radius:16px;background:rgba(10,6,18,.78);border:1px solid rgba(255,255,255,.12);font-weight:900;min-width:260px;text-align:center}
+.startbox,.finish{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(3,2,7,.86);backdrop-filter:blur(10px)}
+.startcard,.finishcard{width:min(620px,94vw);background:linear-gradient(145deg,#180b2b,#0a0613);border:1px solid rgba(255,69,215,.45);border-radius:28px;padding:28px;text-align:center;box-shadow:0 30px 100px #000c,0 0 45px rgba(157,92,255,.18)}
+.startcard h1,.finishcard h2{font-size:clamp(34px,6vw,64px);margin:0 0 10px}.startcard p,.finishcard p{line-height:1.5;color:#e7ddf2}
+.mode-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.finish{display:none}.finishcard .stars{font-size:52px;letter-spacing:8px;color:var(--yellow)}
+.particle{position:fixed;z-index:30;pointer-events:none;font-size:22px;animation:fly 1s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(360deg);opacity:0}}
+@media(max-width:760px){.header{grid-template-columns:1fr auto}.score{display:none}.brand{font-size:13px}.controls{padding:7px}.controls button{padding:8px 10px;font-size:12px}.prompt{top:72px}.arena{inset:145px 8px 62px}.star{width:110px}}
+</style>
+</head>
+<body>
+<div class="game">
+<video id="camera" playsinline muted></video><div class="dark-layer"></div><div class="stage-lights"></div>
+<div class="header"><div class="brand">@malysheva_tutor</div><div class="score">Раунд: <span id="round">1</span>/<span id="total">10</span> · Очки: <span id="score">0</span></div><div class="controls"><button id="voiceBtn" class="active">🔊 Голос</button><button id="cameraBtn">📷 Камера</button></div></div>
+<div class="prompt"><div class="small">Команда</div><div class="task" id="task">Найди звезду, значение которой равно 9</div></div>
+<div class="arena" id="arena"></div><div id="finger"></div>
+<div class="footer"><div class="status" id="status">Готовься ловить неоновые звёзды ✨</div></div>
+
+<div class="startbox" id="startbox"><div class="startcard"><div style="font-size:62px">⭐✨🎤</div><h1>Неоновые звёзды</h1><p>На сцене появятся звёзды с квадратными корнями. Услышь команду и нажми на звезду, значение которой равно названному числу.</p><p><b>Режим камеры:</b> управляй указательным пальцем. <b>Режим мыши:</b> нажимай на звёзды обычным кликом.</p><div class="mode-buttons"><button id="startMouse">Начать мышкой</button><button id="startCamera">Начать с камерой</button></div></div></div>
+
+<div class="finish" id="finish"><div class="finishcard"><div style="font-size:66px">🏆✨</div><h2>Ты собрала все звёзды!</h2><p>Отличная работа с квадратными корнями.</p><div class="stars">★★★★★</div><button onclick="restartGame()">Играть ещё раз</button></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script>
+const rounds=[
+{target:9,roots:[81,36,49,64,25,100]},{target:7,roots:[49,16,36,64,81,25]},
+{target:12,roots:[144,121,100,169,64,81]},{target:5,roots:[25,36,49,16,81,64]},
+{target:11,roots:[121,100,144,81,169,64]},{target:8,roots:[64,49,36,81,100,25]},
+{target:6,roots:[36,25,49,64,81,100]},{target:10,roots:[100,81,121,64,144,49]},
+{target:4,roots:[16,25,36,49,64,81]},{target:13,roots:[169,144,121,100,81,64]}];
+let current=0,score=0,voiceOn=true,cameraMode=false,locked=false,handTracker=null,mpCamera=null,lastHit=0;
+const arena=document.getElementById("arena"),finger=document.getElementById("finger"),task=document.getElementById("task"),statusEl=document.getElementById("status");
+document.getElementById("total").textContent=rounds.length;
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function positions(n){const spots=[[4,8],[38,3],[72,10],[15,52],[48,46],[77,55],[4,66],[35,70],[68,72]];return shuffle(spots).slice(0,n)}
+function speak(text){if(!voiceOn||!("speechSynthesis" in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ru-RU";u.rate=.92;u.pitch=1.08;u.volume=.9;speechSynthesis.speak(u)}
+function playTone(type){try{const C=window.AudioContext||window.webkitAudioContext;const ctx=playTone.ctx||(playTone.ctx=new C());if(ctx.state==="suspended")ctx.resume();const map={good:[523.25,659.25,783.99],bad:[246.94,196],start:[392,523.25]};const arr=map[type]||map.good,now=ctx.currentTime;arr.forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain(),t=now+i*.1;o.type=type==="bad"?"triangle":"sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.08,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.35);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.38)})}catch(e){}}
+function renderRound(){locked=false;const r=rounds[current];document.getElementById("round").textContent=current+1;document.getElementById("score").textContent=score;task.textContent=`Найди звезду, значение которой равно ${r.target}`;statusEl.textContent="Выбери правильную звезду";arena.innerHTML="";const roots=shuffle(r.roots),pos=positions(roots.length);roots.forEach((num,i)=>{const el=document.createElement("div");el.className="star";el.dataset.value=Math.sqrt(num);el.style.left=pos[i][0]+"%";el.style.top=pos[i][1]+"%";el.innerHTML=`<span>√${num}</span>`;el.addEventListener("click",()=>chooseStar(el));arena.appendChild(el)});setTimeout(()=>speak(`Найди звезду, значение которой равно ${r.target}`),250)}
+function chooseStar(el){if(locked)return;const correct=Number(el.dataset.value)===rounds[current].target;if(correct){locked=true;score++;el.classList.add("correct");statusEl.textContent="Верно! ⭐";playTone("good");burst(el);setTimeout(()=>{current++;if(current>=rounds.length)finishGame();else renderRound()},850)}else{el.classList.remove("wrong");void el.offsetWidth;el.classList.add("wrong");statusEl.textContent="Попробуй ещё раз";playTone("bad")}}
+function burst(el){const r=el.getBoundingClientRect(),symbols=["✦","★","✧","⋆"];for(let i=0;i<18;i++){const p=document.createElement("div");p.className="particle";p.textContent=symbols[Math.floor(Math.random()*symbols.length)];p.style.left=(r.left+r.width/2)+"px";p.style.top=(r.top+r.height/2)+"px";p.style.color=["#ff45d7","#9d5cff","#4df3ff","#ffe45e"][i%4];p.style.setProperty("--dx",(Math.random()*180-90)+"px");p.style.setProperty("--dy",(Math.random()*-160-20)+"px");document.body.appendChild(p);setTimeout(()=>p.remove(),1100)}}
+function finishGame(){document.getElementById("finish").style.display="flex";statusEl.textContent="Все звёзды собраны!";speak("Поздравляю! Ты собрала все неоновые звёзды!")}
+function restartGame(){current=0;score=0;document.getElementById("finish").style.display="none";renderRound()}
+function startGame(useCamera){document.getElementById("startbox").style.display="none";cameraMode=useCamera;playTone("start");renderRound();if(useCamera)enableCamera()}
+document.getElementById("startMouse").onclick=()=>startGame(false);document.getElementById("startCamera").onclick=()=>startGame(true);
+document.getElementById("voiceBtn").onclick=()=>{voiceOn=!voiceOn;document.getElementById("voiceBtn").classList.toggle("active",voiceOn);if(voiceOn)speak(task.textContent);else speechSynthesis.cancel()};
+document.getElementById("cameraBtn").onclick=()=>enableCamera();
+
+async function enableCamera(){cameraMode=true;document.getElementById("cameraBtn").classList.add("active");statusEl.textContent="Запрашиваю доступ к камере…";try{handTracker=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});handTracker.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.65,minTrackingConfidence:.55});handTracker.onResults(onHands);const video=document.getElementById("camera");mpCamera=new Camera(video,{onFrame:async()=>{await handTracker.send({image:video})},width:1280,height:720});await mpCamera.start();finger.style.display="block";statusEl.textContent="Покажи руку и коснись звезды указательным пальцем"}catch(e){cameraMode=false;finger.style.display="none";statusEl.textContent="Камера недоступна — играй мышкой";alert("Не удалось включить камеру. Для режима с рукой открой игру через HTTPS или localhost и разреши доступ к камере.")}}
+function onHands(results){if(!cameraMode||!results.multiHandLandmarks||!results.multiHandLandmarks.length){finger.style.display="none";return}const lm=results.multiHandLandmarks[0][8];const x=(1-lm.x)*window.innerWidth,y=lm.y*window.innerHeight;finger.style.display="block";finger.style.left=x+"px";finger.style.top=y+"px";document.querySelectorAll(".star").forEach(s=>s.classList.remove("hovered"));const el=document.elementFromPoint(x,y),star=el&&el.closest?el.closest(".star"):null;if(star){star.classList.add("hovered");const now=Date.now();if(now-lastHit>900){lastHit=now;chooseStar(star)}}}
+</script>
+</body>
+</html>
